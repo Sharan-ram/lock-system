@@ -3,14 +3,28 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 // import actions
-import { startFetchLocks } from '../../redux/actions/locks'
+import {
+  startFetchLocks,
+  startUnlockDoor
+} from '../../redux/actions/locks'
 // import selectors
 import {
   isFetching as isLocksfetching,
-  getLocksArray
+  errMsg,
+  getLocksArray,
+  unlockStatus
 } from '../../redux/reducers/locks'
 
 class LocksContainer extends Component {
+  static propTypes = {
+    isLocksfetching: PropTypes.bool.isRequired,
+    errMsg: PropTypes.string.isRequired,
+    locksArray: PropTypes.array.isRequired,
+    unlockStatus: PropTypes.object.isRequired,
+    fetchLocks: PropTypes.func.isRequired,
+    unlockDoor: PropTypes.func.isRequired
+  }
+
   constructor(props) {
     super(props)
     this.handleUnlock = this.handleUnlock.bind(this)
@@ -22,7 +36,7 @@ class LocksContainer extends Component {
   }
 
   renderLocks() {
-    const { locksArray } = this.props
+    const { locksArray, unlockStatus } = this.props
     return (
       <table>
         <thead>
@@ -39,42 +53,61 @@ class LocksContainer extends Component {
           </tr>
         </thead>
         <tbody>
-          {locksArray.map(lockObj => (
-            <tr key={lockObj.id}>
-              <td>
-                {lockObj.name}
-              </td>
-              <td>
-                <button
-                  type='button'
-                  onClick={this.handleUnlock}
-                  value={lockObj.id}
-                >
-                  Unlock
-                </button>
-              </td>
-              <td>
-                Status
-              </td>
-            </tr>
-          ))}
+          {locksArray.map(lockObj => {
+            const { id } = lockObj
+            const status = unlockStatus[id]
+            return (
+              <tr key={lockObj.id}>
+                <td>
+                  {lockObj.name}
+                </td>
+                <td>
+                  <button
+                    type='button'
+                    onClick={this.handleUnlock}
+                    value={lockObj.id}
+                    disabled={this.isButtonDisabled(status)}
+                  >
+                    Unlock
+                  </button>
+                </td>
+                <td>
+                  {status ? status : ''}
+                </td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
     )
   }
 
+  isButtonDisabled(status) {
+    if (status) {
+      if (status === 'success' || status === 'inProgress') return true
+      return false
+    }
+    return false
+  }
+
   handleUnlock(e) {
-    const { value } = e.target
-    console.log("value", value);
+    const { value: lockId } = e.target
+    const { unlockDoor } = this.props
+    unlockDoor(lockId)
   }
 
   render() {
-    const { isLocksfetching } = this.props
+    const { isLocksfetching, errMsg } = this.props
     return (
       <div>
         {isLocksfetching ?
           'Fetching Locks pls wait' :
           this.renderLocks()
+        }
+        {!isLocksfetching && errMsg &&
+          <div>
+            {errMsg}
+          </div>
         }
       </div>
     )
@@ -83,12 +116,17 @@ class LocksContainer extends Component {
 
 const mapStateToProps = state => ({
   isLocksfetching: isLocksfetching(state),
-  locksArray: getLocksArray(state)
+  locksArray: getLocksArray(state),
+  unlockStatus: unlockStatus(state),
+  errMsg: errMsg(state)
 })
 
 const mapDispatchToProps = dispatch => ({
-  fetchLocks() {
+  fetchLocks () {
     dispatch(startFetchLocks())
+  },
+  unlockDoor (lockId) {
+    dispatch(startUnlockDoor(lockId))
   }
 })
 
