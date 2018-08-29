@@ -35,3 +35,17 @@ export const locks = (state = initialState, action) => {
     default: return state
   }
 }
+
+// selectors
+export const isFetching = state => state.locks.isFetching
+export const getById = state => state.locks.byId
+export const getAllIds = state => state.locks.allIds
+
+export const getLocksArray = createSelector(
+  getById,
+  getAllIds,
+  (locksById, allLockIds) => {
+    if (allLockIds.length === 0) return []
+    return allLockIds.map(id => locksById[id])
+  }
+)
