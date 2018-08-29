@@ -8,7 +8,6 @@ import RootReducer from './redux/reducers/index.js'
 const configureStore = () => {
   const store = createStore(
     RootReducer,
-    undefined,
     composeWithDevTools(applyMiddleware(thunk))
   )
   return store
