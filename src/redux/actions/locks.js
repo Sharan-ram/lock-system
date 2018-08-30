@@ -71,7 +71,8 @@ export const startUnlockDoor = lockId => {
 }
 
 const emitStartPost = (lockId) => ({
-  type: UNLOCK_DOOR_START
+  type: UNLOCK_DOOR_START,
+  lockId
 })
 
 const emitUnlockSuccess = (lockId) => ({
